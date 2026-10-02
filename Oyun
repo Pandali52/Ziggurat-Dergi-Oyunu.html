@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, user-select=none">
+    <title>İhsan Zakiroğlu Ziggurat Oyunu v12.0 - Ultimate Genişletilmiş Sürüm</title>
+    <style>
+        /* ==========================================================================
+           1. GENEL STİLLER, SIFIRLAMA VE RENK PALETİ MİMARİSİ
+           ========================================================================== */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Courier New', Courier, monospace; 
+            user-select: none; 
+            -webkit-user-select: none; 
+            touch-action: none; 
+        }
+        body { 
+            background: #0b0c10; 
+            color: #fff; 
+            text-align: center; 
+            overflow: hidden; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+        }
+        
+        /* ==========================================================================
+           2. BAŞLANGIÇ MENÜSÜ VE ÖNİZLEME BİLEŞENLERİ
+           ========================================================================== */
+        #menu { 
+            max-width: 520px; 
+            width: 95%; 
+            background: #1f2833; 
+            padding: 25px; 
+            border-radius: 12px; 
+            border: 3px solid #66fcf1; 
+            box-shadow: 0 0 35px rgba(102, 252, 241, 0.35); 
+            z-index: 10; 
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+        .row { 
+            margin: 10px 0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            text-align: left; 
+        }
+        label { 
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            color: #c5c6c7; 
+        }
+        input[type="text"], select { 
+            padding: 6px; 
+            background: #0b0c10; 
+            color: #66fcf1; 
+            border: 1px solid #45a29e; 
+            border-radius: 6px; 
+            outline: none;
+        }
+        input[type="color"] { 
+            border: none; 
+            width: 34px; 
+            height: 34px; 
+            cursor: pointer; 
+            background: none; 
+        }
+        button { 
+            background: #66fcf1; 
+            color: #0b0c10; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            width: 100%; 
+            font-size: 1rem; 
+            box-shadow: 0 4px 0 #45a29e; 
+            transition: all 0.1s ease;
+        }
+        button:active { 
+            transform: translateY(2px); 
+            box-shadow: 0 2px 0 #45a29e; 
+        }
+        #previewCanvas { 
+            background: #0b0c10; 
+            border: 2px dashed #45a29e; 
+            margin: 10px auto; 
+            display: block; 
+            image-rendering: pixelated; 
+            width: 96px; 
+            height: 96px; 
+        }
+        
+        /* ==========================================================================
+           3. OYUN EKRANI, ÜST BAR VE KANVAS ALANI
+           ========================================================================== */
+        #game-view { 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 100vw; 
+            height: 100vh; 
+            position: relative; 
+            justify-content: flex-start; 
+        }
+        #ui-top-bar { 
+            width: 100%; 
+            max-width: 950px; 
+            background: #1f2833; 
+            padding: 8px 12px; 
+            border: 2px solid #45a29e; 
+            border-bottom: none; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 0.78rem; 
+            z-index: 5; 
+        }
+        .ui-btn { 
+            width: auto; 
+            margin: 0; 
+            padding: 4px 10px; 
+            font-size: 0.75rem; 
+            background: #45a29e; 
+            color: #0b0c10; 
+            box-shadow: none; 
+            font-weight: bold; 
+        }
+        #canvas-wrap { 
+            position: relative; 
+            width: 950px; 
+            height: 460px; 
+            max-width: 100vw; 
+            max-height: 55vh; 
+            border: 3px solid #45a29e; 
+            overflow: hidden; 
+            background: #0b0c10; 
+        }
+        canvas#gameCanvas { 
+            background: #0b0c10; 
+            image-rendering: pixelated; 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+        }
+        #sound-bar-container {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            background: rgba(31, 40, 51, 0.9);
+            border: 2px solid #ff4757;
+            border-radius: 8px;
+            padding: 8px;
+            display: none;
+            z-index: 60;
+            text-align: center;
+        }
+        #sound-bar-track {
+            width: 100%;
+            height: 16px;
+            background: #0b0c10;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+            border: 1px solid #45a29e;
+        }
+        #sound-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: #ff4757;
+            transition: width 0.1s linear;
+        }
+        
+        /* ==========================================================================
+           4. MOBİL VE DOKUNMATİK KONTROL SİSTEMİ
+           ========================================================================== */
+        #touch-controls-container {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            height: 130px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            pointer-events: none;
+            z-index: 50;
+        }
+        .touch-group-dpad {
+            position: relative;
+            width: 130px;
+            height: 120px;
+            pointer-events: auto;
+        }
+        .t-btn {
+            position: absolute;
+            background: rgba(102, 252, 241, 0.25);
+            border: 2px solid rgba(102, 252, 241, 0.6);
+            color: #66fcf1;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 0 8px rgba(102,252,241,0.2);
+        }
+        .t-btn:active, .t-btn.pressed {
+            background: rgba(102, 252, 241, 0.6);
+            transform: scale(0.95);
+        }
+        #t-up { top: 0; left: 45px; width: 40px; height: 38px; }
+        #t-down { bottom: 0; left: 45px; width: 40px; height: 38px; }
+        #t-left { top: 41px; left: 0; width: 42px; height: 38px; }
+        #t-right { top: 41px; right: 0; width: 42px; height: 38px; }
+        .touch-group-actions {
+            display: flex;
+            gap: 8px;
+            pointer-events: auto;
+            align-items: center;
+        }
+        .t-action-btn {
+            background: rgba(69, 162, 158, 0.35);
+            border: 2px solid rgba(102, 252, 241, 0.7);
+            color: #fff;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(2px);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .t-action-btn:active {
+            background: rgba(102, 252, 241, 0.7);
+            color: #0b0c10;
+        }
+
+        /* ==========================================================================
+           5. MODAL PENCERELERİ VE ARAYÜZ DİYALOGLARI
+           ========================================================================== */
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.88); 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 100; 
+        }
+        .modal-box { 
+            background: #1f2833; 
+            padding: 22px; 
+            border-radius: 12px; 
+            border: 3px solid #66fcf1; 
+            max-width: 520px; 
+            width: 92%; 
+            text-align: center; 
+            position: relative; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.9); 
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-box h3 { 
+            color: #66fcf1; 
+            margin-bottom: 10px; 
+        }
+        .inv-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            margin: 15px 0; 
+            max-height: 250px; 
+            overflow-y: auto; 
+        }
+        .inv-slot { 
+            background: #0b0c10; 
+            border: 2px solid #45a29e; 
+            border-radius: 8px; 
+            padding: 8px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 80px; 
+            cursor: pointer; 
+        }
+        .inv-slot.selected { 
+            border-color: #66fcf1; 
+            background: #1f2833; 
+            box-shadow: 0 0 10px #66fcf1; 
+        }
+        .inv-slot .item-icon { 
+            font-size: 1.8rem; 
+            margin-bottom: 4px; 
+        }
+        .inv-slot span { 
+            font-size: 0.72rem; 
+            color: #c5c6c7; 
+            text-align: center; 
+        }
+        .shop-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px; 
+            margin: 15px 0; 
+        }
+        .shop-slot { 
+            background: #0b0c10; 
+            border: 2px solid #45a29e; 
+            border-radius: 8px; 
+            padding: 8px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        #version-footer { 
+            font-size: 0.72rem; 
+            color: #45a29e; 
+            margin-top: 4px; 
+            font-weight: bold; 
+        }
+
+        /* ==========================================================================
+           6. MİNİ OYUNLAR VE ÖZEL GÖRSEL EKRANLARI
+           ========================================================================== */
+        .slide-puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin: 15px auto;
+            max-width: 240px;
+        }
+        .slide-tile {
+            background: #1f2833;
+            border: 2px solid #66fcf1;
+            color: #66fcf1;
+            font-size: 1.4rem;
+            font-weight: bold;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+        .slide-tile.empty {
+            background: #0b0c10;
+            border: 2px dashed #333;
+            cursor: default;
+            color: transparent;
+        }
+        .slide-tile:hover:not(.empty) {
+            background: #45a29e;
+            color: #0b0c10;
+        }
+        #jumpscare-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000;
+            z-index: 999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeInScreen 0.3s ease-in-out;
+        }
+        @keyframes fadeInScreen {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        #teacher-face-box {
+            width: 220px;
+            height: 220px;
+            background: #ffdbac;
+            border: 6px solid #e74c3c;
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 0 50px #ff4757;
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .t-brow { width: 50px; height: 8px; background: #000; position: absolute; top: 60px; }
+        .t-brow.left { left: 40px; transform: rotate(15deg); }
+        .t-brow.right { right: 40px; transform: rotate(-15deg); }
+        .t-eye { width: 30px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 75px; display: flex; align-items: center; justify-content: center; }
+        .t-eye.left { left: 45px; }
+        .t-eye.right { right: 45px; }
+        .t-pupil { width: 12px; height: 12px; background: #000; border-radius: 50%; }
+        .t-mustache { width: 70px; height: 14px; background: #2c3e50; position: absolute; top: 125px; border-radius: 4px; }
+        .t-mouth { width: 80px; height: 25px; background: #c0392b; position: absolute; bottom: 35px; border-radius: 0 0 20px 20px; }
+        #jumpscare-text {
+            color: #ff4757;
+            font-size: 2.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255,71,87,0.8);
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #jumpscare-subtext {
+            color: #ffa502;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+            text-shadow: 0 0 10px rgba(255,165,2,0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BAŞLANGIÇ MENÜSÜ -->
+    <div id="menu">
+        <h2 style="color:#66fcf1; margin-bottom:5px;">Ziggurat Oyunu v12.0</h2>
+        <p style="font-size:0.75rem; color:#c5c6c7; margin-bottom:10px;">Genişletilmiş Okul Macerası & Fen Sınavı Sürümü</p>
+        <canvas id="previewCanvas" width="32" height="32"></canvas>
+        <div class="row"><label>İsim:</label><input type="text" id="p-name" value="Ali" maxlength="10"></div>
+        <div class="row">
+            <label>Cinsiyet:</label>
+            <select id="p-gender">
+                <option value="male">Erkek</option>
+                <option value="female">Kız</option>
+            </select>
+        </div>
+        <div class="row">
+            <label>Saç Stili:</label>
+            <select id="p-hairstyle">
+                <option value="short">Kısa Saç</option>
+                <option value="long">Uzun Saç</option>
+                <option value="curly">Kıvırcık Saç</option>
+                <option value="spiked">Dik/Punk Saç</option>
+                <option value="bald">Kel</option>
+            </select>
+        </div>
+        <div class="row"><label>Ten Rengi:</label><input type="color" id="c-skin" value="#ffdbac"></div>
+        <div class="row"><label>Saç Rengi:</label><input type="color" id="c-hair" value="#4a2e00"></div>
+        <div class="row"><label>Kıyafet Rengi:</label><input type="color" id="c-shirt" value="#3742fa"></div>
+        <div class="row"><label>Pantolon Rengi:</label><input type="color" id="c-pants" value="#2f3542"></div>
+        <button id="start-btn">OYUNA BAŞLA 🎮 (MÜZİK AKTİF)</button>
+        <button id="how-to-play-btn" style="background:#45a29e; color:#0b0c10;">❓ NASIL OYNANIR?</button>
+    </div>
+
+    <!-- NASIL OYNANIR MODALI -->
+    <div class="modal" id="modal-howToPlay">
+        <div class="modal-box" style="text-align: left;">
+            <h3 style="color:#66fcf1; text-align:center;">📖 Nasıl Oynanır?</h3>
+            <div style="margin:15px 0; font-size:0.8rem; line-height:1.6; max-height:280px; overflow-y:auto; color:#c5c6c7; padding-right:5px;">
+                <p style="color:#66fcf1; font-weight:bold; font-size:0.9rem;">🎮 v12.0 Kurallar & Özellikler:</p>
+                <ul style="margin-left:20px; margin-bottom:12px;">
+                    <li><b>Eğilme Tuşu:</b> [F] tuşuna basarak eğilebilirsiniz. Öğretmenler odasında eğilmek zorunludur!</li>
+                    <li><b>Çok Amaçlı Salon:</b> Kilitlidir. Anahtarı depodadır. İçerisindeki koltuklara oturunca özel görsel açılır.</li>
+                    <li><b>Özel İsim (1786):</b> İsminizi 1786 yaparsanız her zaman 2 kat hızlı olursunuz.</li>
+                    <li><b>Tuvaletler:</b> İçeride klozet ve musluklar bulunur. Su tabancasını musluklara tıklayarak yeniden doldurabilirsiniz.</li>
+                    <li><b>Kantin:</b> 12 TL karşılığında <b>2 Can veren Tost</b> satın alabilirsiniz.</li>
+                    <li><b>5-D Fen Bilimleri Sınavı:</b> 5-D sınıfına girerek Fen Bilimleri sınavını çözün; başarılı olunca <b>Depo Anahtarı</b> kazanılır.</li>
+                </ul>
+            </div>
+            <button id="m-close-howToPlay" style="background:#57606f; color:#fff;">Kapat</button>
+        </div>
+    </div>
+
+    <!-- OYUN ANA ARAYÜZÜ -->
+    <div id="game-view">
+        <div id="ui-top-bar">
+            <span>👤 <strong id="disp-name">Ali</strong> | Kat: <strong id="disp-floor" style="color:#66fcf1;">1. Kat</strong></span>
+            <span>❤️ Can: <span id="disp-hp" style="color:#ff4757;">3</span> | 💰 Para: <span id="disp-money" style="color:#2ed573;">20</span> TL</span>
+            <span>✋ Elde: <span id="disp-hand" style="color:#ffa502;">Boş</span> <span id="disp-ammo" style="color:#70a1ff;"></span></span>
+            <button class="ui-btn" id="btn-inv">🎒 Envanter</button>
+        </div>
+        <div id="canvas-wrap">
+            <canvas id="gameCanvas" width="950" height="460"></canvas>
+            
+            <div id="sound-bar-container">
+                <span style="font-size:0.75rem; color:#ff4757; font-weight:bold;">⚠️ SES SEVİYESİ (EĞİLİN!)</span>
+                <div id="sound-bar-track">
+                    <div id="sound-bar-fill"></div>
+                </div>
+            </div>
+            <div id="touch-controls-container">
+                <div class="touch-group-dpad">
+                    <div class="t-btn" id="t-up">▲</div>
+                    <div class="t-btn" id="t-down">▼</div>
+                    <div class="t-btn" id="t-left">◀</div>
+                    <div class="t-btn" id="t-right">▶</div>
+                </div>
+                <div class="touch-group-actions">
+                    <div class="t-action-btn" id="t-act-e" title="Etkileşim">E</div>
+                    <div class="t-action-btn" id="t-act-r" title="Tüket">R</div>
+                    <div class="t-action-btn" id="t-act-f" title="Eğil">F</div>
+                    <div class="t-action-btn" id="t-act-n" title="Ateş">N</div>
+                    <div class="t-action-btn" id="t-act-inv" title="Envanter">🎒</div>
+                </div>
+            </div>
+        </div>
+        <div id="version-footer">Ziggurat v12.0 Aktif | Hareket: WASD | Eğil: F | Etkileşim: E | Tüket: R</div>
+    </div>
+
+    <!-- GENEL OYUN MESAJ MODALI -->
+    <div class="modal" id="modal-game-msg">
+        <div class="modal-box">
+            <h3 id="gm-title">Bilgi</h3>
+            <p id="gm-text" style="margin:12px 0; font-size:0.9rem; color:#c5c6c7; line-height:1.5;"></p>
+            <button id="gm-close" style="background:#45a29e; color:#0b0c10;">Tamam</button>
+        </div>
+    </div>
+
+    <!-- ENVANTER MODALI -->
+    <div class="modal" id="modal-inventory">
+        <div class="modal-box">
+            <h3>🎒 Çanta Envanteri</h3>
+            <div class="inv-grid" id="inv-grid-container"></div>
+            <div style="display:flex; gap:10px;">
+                <button id="btn-equip-item" style="background:#2ed573; color:#0b0c10;">Eline Al / Kuşan</button>
+                <button id="btn-close-inv" style="background:#57606f; color:#fff;">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KANTİN MAĞAZA MODALI -->
+    <div class="modal" id="modal-canteen">
+        <div class="modal-box">
+            <h3>🥪 Okul Kantini</h3>
+            <div class="shop-grid">
+                <div class="shop-slot">
+                    <span style="font-size:2rem;">🥪</span>
+                    <strong style="color:#66fcf1; font-size:0.85rem;">Kaşarlı Tost</strong>
+                    <span style="font-size:0.75rem; color:#2ed573;">Fiyat: 12 TL</span>
+                    <span style="font-size:0.7rem; color:#c5c6c7;">+2 Can Verir</span>
+                    <button class="btn-buy" data-item="toast" style="margin-top:6px; padding:6px; font-size:0.75rem;">Satın Al</button>
+                </div>
+                <div class="shop-slot">
+                    <span style="font-size:2rem;">🔫</span>
+                    <strong style="color:#66fcf1; font-size:0.85rem;">Su Tabancası</strong>
+                    <span style="font-size:0.75rem; color:#2ed573;">Fiyat: 15 TL</span>
+                    <span style="font-size:0.7rem; color:#c5c6c7;">Su mermisi atar</span>
+                    <button class="btn-buy" data-item="watergun" style="margin-top:6px; padding:6px; font-size:0.75rem;">Satın Al</button>
+                </div>
+            </div>
+            <button id="btn-close-canteen" style="background:#57606f; color:#fff;">Ayrıl</button>
+        </div>
+    </div>
+
+    <!-- 5-D FEN BİLİMLERİ SINAVI MODALI -->
+    <div class="modal" id="modal-quiz">
+        <div class="modal-box" style="text-align:left;">
+            <h3 style="color:#66fcf1; text-align:center;">📝 5-D Fen Bilimleri Sınavı</h3>
+            <div id="quiz-container" style="margin:15px 0;">
+                <p id="quiz-question" style="font-weight:bold; color:#fff; font-size:0.9rem; margin-bottom:12px;"></p>
+                <div id="quiz-options" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+            <button id="btn-close-quiz" style="background:#57606f; color:#fff; margin-top:10px;">Sınavdan Çık</button>
+        </div>
+    </div>
+
+    <!-- ÇAY OCAĞI YAPBOZ MODALI -->
+    <div class="modal" id="modal-puzzle">
+        <div class="modal-box">
+            <h3>🧩 Çay Ocağı Su Tesisatı Yapbozu</h3>
+            <p style="font-size:0.75rem; color:#c5c6c7;">Parçaları doğru sıraya (1-8) getirin!</p>
+            <div class="slide-puzzle-grid" id="puzzle-grid"></div>
+            <button id="btn-close-puzzle" style="background:#57606f; color:#fff;">Vazgeç</button>
+        </div>
+    </div>
+
+    <!-- ÇOK AMAÇLI SALON GÖSTERİ MODALI -->
+    <div class="modal" id="modal-cinema">
+        <div class="modal-box" style="max-width:650px;">
+            <h3>🎭 Çok Amaçlı Salon - Tiyatro Gösterisi</h3>
+            <canvas id="cinemaCanvas" width="580" height="260" style="background:#000; border:2px solid #66fcf1; margin:10px auto; display:block;"></canvas>
+            <button id="btn-close-cinema" style="background:#57606f; color:#fff;">Koltuktan Kalk</button>
+        </div>
+    </div>
+
+    <!-- JUMPSCARE VE GAMEOVER EKRANI -->
+    <div id="jumpscare-overlay">
+        <div id="teacher-face-box">
+            <div class="t-brow left"></div>
+            <div class="t-brow right"></div>
+            <div class="t-eye left"><div class="t-pupil"></div></div>
+            <div class="t-eye right"><div class="t-pupil"></div></div>
+            <div class="t-mustache"></div>
+            <div class="t-mouth"></div>
+        </div>
+        <div id="jumpscare-text">YAKALANDIN!</div>
+        <div id="jumpscare-subtext">ÖĞRETMEN SENİ MÜDÜRE GÖTÜRDÜ!</div>
+        <button id="btn-restart-game" style="width:auto; margin-top:30px; padding:15px 30px; background:#ff4757; color:#fff; font-size:1.2rem;">TEKRAR DENE 🔄</button>
+    </div>
+
+    <!-- ==========================================================================
+       7. OYUN MANTAĞI VE SİSTEM SCRIPT KODLARI
+       ========================================================================== -->
+    <script>
+        /* === SES SİSTEMİ (WEB AUDIO API VE DİNAMİK BEEP SENTEZLEYİCİ) === */
+        const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSynthSound(freq, type, duration) {
+            try {
+                if (AudioCtx.state === 'suspended') { AudioCtx.resume(); }
+                const osc = AudioCtx.createOscillator();
+                const gain = AudioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, AudioCtx.currentTime);
+                gain.gain.setValueAtTime(0.15, AudioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, AudioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(AudioCtx.destination);
+                osc.start();
+                osc.stop(AudioCtx.currentTime + duration);
+            } catch(e){}
+        }
+
+        /* BGM Arka Plan Müziği Sentezleyici */
+        let bgmInterval = null;
+        function startBGM() {
+            if(bgmInterval) return;
+            const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00];
+            let noteIdx = 0;
+            bgmInterval = setInterval(() => {
+                playSynthSound(notes[noteIdx % notes.length], 'triangle', 0.2);
+                noteIdx++;
+            }, 600);
+        }
+
+        /* === OYUN SİSTEM DEĞİŞKENLERİ VE DURUM YÖNETİMİ === */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const prevCanvas = document.getElementById('previewCanvas');
+        const prevCtx = prevCanvas.getContext('2d');
+
+        let player = {
+            name: "Ali",
+            gender: "male",
+            hairstyle: "short",
+            cSkin: "#ffdbac",
+            cHair: "#4a2e00",
+            cShirt: "#3742fa",
+            cPants: "#2f3542",
+            x: 100,
+            y: 320,
+            w: 24,
+            h: 36,
+            speed: 3.5,
+            isCrouching: false,
+            hp: 3,
+            maxHp: 3,
+            money: 20,
+            inventory: [],
+            hand: null,
+            ammo: 0,
+            currentFloor: 1,
+            dir: 'right'
+        };
+
+        let keys = {};
+        let touchKeys = {};
+        let gameLoopId = null;
+        let isGameRunning = false;
+
+        /* Öğretmenler Odası Ses Seviyesi */
+        let teacherSoundLevel = 0;
+
+        /* Mermiler Dizisi */
+        let bullets = [];
+
+        /* Nöbetçi Öğretmen Devriye Objesi */
+        let teacherPatrol = {
+            x: 500,
+            y: 320,
+            dir: 1,
+            speed: 1.5,
+            rangeMin: 350,
+            rangeMax: 750
+        };
+
+        /* HARİTA OYUN NESNELERİ VE DÜZENLERİ */
+        const mapObjects = {
+            1: [
+                { id: 'stairs_up', type: 'door', x: 860, y: 280, w: 50, h: 80, label: '2. Kata Çık' },
+                { id: 'canteen', type: 'shop', x: 150, y: 290, w: 70, h: 70, label: 'Kantin' },
+                { id: 'wc_male', type: 'room', x: 350, y: 290, w: 60, h: 70, label: 'Erkek Tuvaleti' },
+                { id: 'wc_female', type: 'room', x: 440, y: 290, w: 60, h: 70, label: 'Kız Tuvaleti' },
+                { id: 'multipurpose', type: 'door', x: 650, y: 280, w: 70, h: 80, label: 'Çok Amaçlı Salon' }
+            ],
+            2: [
+                { id: 'stairs_down', type: 'door', x: 40, y: 280, w: 50, h: 80, label: '1. Kata İniş' },
+                { id: 'stairs_up2', type: 'door', x: 860, y: 280, w: 50, h: 80, label: '3. Kata Çık' },
+                { id: 'class_5d', type: 'room', x: 200, y: 290, w: 70, h: 70, label: '5-D Sınıfı' },
+                { id: 'tea_room', type: 'room', x: 400, y: 290, w: 70, h: 70, label: 'Çay Ocağı' },
+                { id: 'teacher_room', type: 'room', x: 600, y: 290, w: 80, h: 70, label: 'Öğretmenler Odası' }
+            ],
+            3: [
+                { id: 'stairs_down2', type: 'door', x: 40, y: 280, w: 50, h: 80, label: '2. Kata İniş' },
+                { id: 'depot', type: 'door', x: 300, y: 280, w: 70, h: 80, label: 'Depo' },
+                { id: 'archive', type: 'room', x: 550, y: 290, w: 70, h: 70, label: 'Arşiv' }
+            ]
+        };
+
+        /* Kilitli Kapı Durumları */
+        let doorLocks = {
+            multipurpose: true,
+            depot: true
+        };
+
+        /* === KARAKTER ÖNİZLEME VE ÇİZİM METOTLARI === */
+        function updatePreview() {
+            player.name = document.getElementById('p-name').value || "Ali";
+            player.gender = document.getElementById('p-gender').value;
+            player.hairstyle = document.getElementById('p-hairstyle').value;
+            player.cSkin = document.getElementById('c-skin').value;
+            player.cHair = document.getElementById('c-hair').value;
+            player.cShirt = document.getElementById('c-shirt').value;
+            player.cPants = document.getElementById('c-pants').value;
+
+            if(player.name === "1786") {
+                player.speed = 7;
+            } else {
+                player.speed = 3.5;
+            }
+
+            drawCharacter(prevCtx, 16, 28, 1, false, 'right');
+        }
+
+        function drawCharacter(c, x, y, scale, crouching, direction) {
+            c.save();
+            c.clearRect(0, 0, 100, 100);
+            c.translate(x, y);
+            c.scale(scale, scale);
+
+            if(direction === 'left') {
+                c.scale(-1, 1);
+            }
+
+            const hOffset = crouching ? 8 : 0;
+
+            // Bacaklar / Pantolon
+            c.fillStyle = player.cPants;
+            c.fillRect(-6, 2 - hOffset, 5, 12 + hOffset);
+            c.fillRect(1, 2 - hOffset, 5, 12 + hOffset);
+
+            // Gövde / Tişört
+            c.fillStyle = player.cShirt;
+            c.fillRect(-8, -10, 16, 14);
+
+            // Baş / Ten
+            c.fillStyle = player.cSkin;
+            c.fillRect(-7, -22, 14, 12);
+
+            // Gözler
+            c.fillStyle = "#000";
+            c.fillRect(1, -18, 2, 3);
+
+            // Saç Stilleri
+            c.fillStyle = player.cHair;
+            if (player.hairstyle === 'short') {
+                c.fillRect(-8, -25, 16, 5);
+            } else if (player.hairstyle === 'long') {
+                c.fillRect(-8, -25, 16, 5);
+                c.fillRect(-8, -22, 4, 12);
+            } else if (player.hairstyle === 'curly') {
+                c.fillRect(-9, -26, 18, 7);
+            } else if (player.hairstyle === 'spiked') {
+                c.beginPath();
+                c.moveTo(-8, -22);
+                c.lineTo(-4, -28);
+                c.lineTo(0, -22);
+                c.lineTo(4, -28);
+                c.lineTo(8, -22);
+                c.fill();
+            }
+
+            // Su Tabancası Elde Görünümü
+            if(player.hand && player.hand.id === 'watergun') {
+                c.fillStyle = "#70a1ff";
+                c.fillRect(4, -6, 10, 4);
+                c.fillStyle = "#ff4757";
+                c.fillRect(2, -4, 4, 6);
+            }
+
+            c.restore();
+        }
+
+        /* === OYUN HARİTASI RENDER SİSTEMİ === */
+        function renderScene() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Arka Plan Duvarı ve Zemin
+            ctx.fillStyle = "#1e272e";
+            ctx.fillRect(0, 0, canvas.width, 360);
+            
+            ctx.fillStyle = "#485460";
+            ctx.fillRect(0, 360, canvas.width, 100);
+
+            // Zemin Çizgileri
+            ctx.strokeStyle = "#808e9b";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 360);
+            ctx.lineTo(canvas.width, 360);
+            ctx.stroke();
+
+            // Kat Tabela Bilgisi
+            ctx.fillStyle = "#d2dae2";
+            ctx.font = "bold 16px Courier New";
+            ctx.fillText("MEVCUT KAT: " + player.currentFloor + ". KAT", 20, 30);
+
+            // Obje ve Kapıların Çizimi
+            const currentObjs = mapObjects[player.currentFloor] || [];
+            currentObjs.forEach(obj => {
+                if(obj.type === 'door') {
+                    ctx.fillStyle = doorLocks[obj.id] ? "#c0392b" : "#27ae60";
+                    ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "10px Courier New";
+                    ctx.fillText(obj.label, obj.x - 5, obj.y - 10);
+                    if(doorLocks[obj.id]) {
+                        ctx.fillText("🔒 KİLİTLİ", obj.x + 5, obj.y + 40);
+                    }
+                } else if(obj.type === 'room' || obj.type === 'shop') {
+                    ctx.fillStyle = "#2980b9";
+                    ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
+                    ctx.fillStyle = "#f1c40f";
+                    ctx.font = "11px Courier New";
+                    ctx.fillText(obj.label, obj.x - 5, obj.y - 10);
+                }
+            });
+
+            // 2. Katta Nöbetçi Öğretmen Çizimi ve Devriyesi
+            if(player.currentFloor === 2) {
+                drawTeacher(teacherPatrol.x, teacherPatrol.y);
+            }
+
+            // Su Mermilerinin Çizilmesi
+            ctx.fillStyle = "#00d2d3";
+            bullets.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Karakter Çizimi
+            const scale = player.isCrouching ? 0.9 : 1.1;
+            drawCharacter(ctx, player.x, player.y, scale, player.isCrouching, player.dir);
+        }
+
+        function drawTeacher(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            // Vücut
+            ctx.fillStyle = "#8e44ad";
+            ctx.fillRect(-10, -15, 20, 25);
+            // Baş
+            ctx.fillStyle = "#ffdbac";
+            ctx.fillRect(-8, -30, 16, 15);
+            // Bıyık
+            ctx.fillStyle = "#2c3e50";
+            ctx.fillRect(-6, -20, 12, 4);
+            // Şapka / Saç
+            ctx.fillStyle = "#2c3e50";
+            ctx.fillRect(-10, -33, 20, 5);
+            ctx.restore();
+        }
+
+        /* === OYUN DÖNGÜSÜ VE MANTIK TESPİTLERİ === */
+        function updateGame() {
+            if(!isGameRunning) return;
+
+            // Hareket Mantığı
+            let moveSpeed = player.speed;
+            if(player.isCrouching) moveSpeed *= 0.5;
+
+            if(keys['KeyA'] || keys['ArrowLeft'] || touchKeys['left']) {
+                player.x -= moveSpeed;
+                player.dir = 'left';
+            }
+            if(keys['KeyD'] || keys['ArrowRight'] || touchKeys['right']) {
+                player.x += moveSpeed;
+                player.dir = 'right';
+            }
+
+            // Sınır Kontrolleri
+            if(player.x < 20) player.x = 20;
+            if(player.x > canvas.width - 20) player.x = canvas.width - 20;
+
+            // Eğilme Durumu
+            player.isCrouching = !!(keys['KeyF'] || touchKeys['f']);
+
+            // Mermi Güncellemeleri
+            bullets.forEach((b, idx) => {
+                b.x += b.vx;
+                if(b.x < 0 || b.x > canvas.width) {
+                    bullets.splice(idx, 1);
+                }
+            });
+
+            // Öğretmenler Odası Yanında Ses Mekaniği
+            const soundBarContainer = document.getElementById('sound-bar-container');
+            const soundBarFill = document.getElementById('sound-bar-fill');
+
+            if(player.currentFloor === 2 && player.x > 550 && player.x < 700) {
+                soundBarContainer.style.display = 'block';
+                if(!player.isCrouching && (keys['KeyA'] || keys['KeyD'] || touchKeys['left'] || touchKeys['right'])) {
+                    teacherSoundLevel += 1.5;
+                } else {
+                    teacherSoundLevel = Math.max(0, teacherSoundLevel - 0.8);
+                }
+
+                soundBarFill.style.width = Math.min(100, teacherSoundLevel) + "%";
+
+                if(teacherSoundLevel >= 100) {
+                    triggerJumpscare("ÖĞRETMENLER ODASINDA ÇOK SES YAPTIN!");
+                }
+            } else {
+                soundBarContainer.style.display = 'none';
+                teacherSoundLevel = Math.max(0, teacherSoundLevel - 1);
+            }
+
+            // 2. Kat Devriye Öğretmen Mantığı
+            if(player.currentFloor === 2) {
+                teacherPatrol.x += teacherPatrol.speed * teacherPatrol.dir;
+                if(teacherPatrol.x > teacherPatrol.rangeMax || teacherPatrol.x < teacherPatrol.rangeMin) {
+                    teacherPatrol.dir *= -1;
+                }
+
+                // Yakalanma Kontrolü
+                const dist = Math.abs(player.x - teacherPatrol.x);
+                if(dist < 30 && !player.isCrouching) {
+                    triggerJumpscare("NÖBETÇİ ÖĞRETMENE KORİDORDA YAKALANDIN!");
+                }
+            }
+
+            renderScene();
+            updateUI();
+            gameLoopId = requestAnimationFrame(updateGame);
+        }
+
+        /* === ETKİLEŞİM VE EYLEM SİSTEMİ === */
+        function handleInteraction() {
+            const objs = mapObjects[player.currentFloor] || [];
+            let interacted = false;
+
+            objs.forEach(obj => {
+                if(Math.abs(player.x - (obj.x + obj.w/2)) < 40) {
+                    interacted = true;
+                    if(obj.id === 'stairs_up') {
+                        player.currentFloor = 2;
+                        player.x = 60;
+                    } else if(obj.id === 'stairs_down') {
+                        player.currentFloor = 1;
+                        player.x = 840;
+                    } else if(obj.id === 'stairs_up2') {
+                        player.currentFloor = 3;
+                        player.x = 60;
+                    } else if(obj.id === 'stairs_down2') {
+                        player.currentFloor = 2;
+                        player.x = 840;
+                    } else if(obj.id === 'canteen') {
+                        openModal('modal-canteen');
+                    } else if(obj.id === 'class_5d') {
+                        startQuiz();
+                    } else if(obj.id === 'tea_room') {
+                        initPuzzle();
+                    } else if(obj.id === 'multipurpose') {
+                        if(doorLocks.multipurpose) {
+                            if(hasItem('multipurpose_key')) {
+                                doorLocks.multipurpose = false;
+                                showGameMessage("Kilit Açıldı!", "Depoda bulduğun anahtar ile Çok Amaçlı Salonun kilidini açtın.");
+                            } else {
+                                showGameMessage("Kapı Kilitli", "Çok Amaçlı Salon kilitli. Anahtar depoda olmalı.");
+                            }
+                        } else {
+                            openCinemaModal();
+                        }
+                    } else if(obj.id === 'depot') {
+                        if(doorLocks.depot) {
+                            if(hasItem('depot_key')) {
+                                doorLocks.depot = false;
+                                showGameMessage("Depo Açıldı!", "5-D Sınıfı sınavından kazandığın anahtarla depoyu açtın. İçeride Çok Amaçlı Salon Anahtarı buldun!");
+                                addItem({ id: 'multipurpose_key', name: 'Çok Amaçlı Salon Anahtarı', icon: '🔑' });
+                            } else {
+                                showGameMessage("Depo Kilitli", "Depo kapısı kilitli. 5-D sınıfındaki Fen sınavını geçerek anahtarı kazanmalısın.");
+                            }
+                        } else {
+                            showGameMessage("Depo", "Depodaki tüm eşyaları zaten aldın.");
+                        }
+                    } else if(obj.id === 'wc_male' || obj.id === 'wc_female') {
+                        if(player.hand && player.hand.id === 'watergun') {
+                            player.ammo = 10;
+                            showGameMessage("Su Dolduruldu 💧", "Musluğu kullanarak Su Tabancasını doldurdun! Mermi: 10/10");
+                        } else {
+                            showGameMessage("Tuvaletler", "Musluklar akıyor. Elinde su tabancası varken buraya gelirsen mermini doldurabilirsin.");
+                        }
+                    }
+                }
+            });
+
+            if(!interacted) {
+                showGameMessage("Bilgi", "Yakınında etkileşime geçebileceğin bir kapı veya obje yok.");
+            }
+        }
+
+        /* Ateş Etme Mantığı */
+        function shootWaterGun() {
+            if(player.hand && player.hand.id === 'watergun') {
+                if(player.ammo > 0) {
+                    player.ammo--;
+                    playSynthSound(500, 'sine', 0.1);
+                    bullets.push({
+                        x: player.x,
+                        y: player.y - 15,
+                        vx: player.dir === 'right' ? 8 : -8
+                    });
+                } else {
+                    showGameMessage("Mermi Bitti!", "Su tabancasının suyu bitti. Tuvaletteki musluklardan doldurabilirsin.");
+                }
+            }
+        }
+
+        /* Tüketme / Tost Yeme Mantığı */
+        function consumeItem() {
+            const toastIdx = player.inventory.findIndex(i => i.id === 'toast');
+            if(toastIdx !== -1) {
+                player.inventory.splice(toastIdx, 1);
+                player.hp = Math.min(player.maxHp, player.hp + 2);
+                playSynthSound(300, 'square', 0.2);
+                showGameMessage("Tost Yenildi 🥪", "Tost yedin ve +2 Can kazandın!");
+            } else {
+                showGameMessage("Yiyecek Yok", "Envanterinde yiyecek tost bulunmuyor.");
+            }
+        }
+
+        /* ENVANTER YARDIMCI METOTLARI */
+        function hasItem(id) {
+            return player.inventory.some(i => i.id === id);
+        }
+
+        function addItem(item) {
+            player.inventory.push(item);
+        }
+
+        function updateUI() {
+            document.getElementById('disp-name').innerText = player.name;
+            document.getElementById('disp-floor').innerText = player.currentFloor + ". Kat";
+            document.getElementById('disp-hp').innerText = player.hp;
+            document.getElementById('disp-money').innerText = player.money;
+            document.getElementById('disp-hand').innerText = player.hand ? player.hand.name : "Boş";
+            document.getElementById('disp-ammo').innerText = player.hand && player.hand.id === 'watergun' ? `(${player.ammo}/10)` : "";
+        }
+
+        /* MODAL VE DİYALOG YÖNETİMİ */
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function showGameMessage(title, text) {
+            document.getElementById('gm-title').innerText = title;
+            document.getElementById('gm-text').innerText = text;
+            openModal('modal-game-msg');
+        }
+
+        /* 5-D FEN BİLİMLERİ SINAV SİSTEMİ */
+        const quizQuestions = [
+            {
+                q: "1. Hangisi Güneş Sistemindeki en büyük gezegendir?",
+                options: ["Dünya", "Jüpiter", "Mars", "Satürn"],
+                answer: 1
+            },
+            {
+                q: "2. Canlıların kalıtsal materyali hücrenin hangi kısmında bulunur?",
+                options: ["Çekirdek", "Sitoplazma", "Hücre Zarı", "Mitokondri"],
+                answer: 0
+            },
+            {
+                q: "3. Hangisi bir ışık kaynağıdır?",
+                options: ["Ay", "Ayna", "Güneş", "Bulut"],
+                answer: 2
+            }
+        ];
+        let currentQuizIdx = 0;
+
+        function startQuiz() {
+            if(hasItem('depot_key') || !doorLocks.depot) {
+                showGameMessage("Sınav Tamamlandı", "5-D Sınıfı Fen Sınavını zaten başarıyla geçip Depo Anahtarını aldın.");
+                return;
+            }
+            currentQuizIdx = 0;
+            renderQuizQuestion();
+            openModal('modal-quiz');
+        }
+
+        function renderQuizQuestion() {
+            const q = quizQuestions[currentQuizIdx];
+            document.getElementById('quiz-question').innerText = q.q;
+            const optDiv = document.getElementById('quiz-options');
+            optDiv.innerHTML = "";
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.innerText = opt;
+                btn.style.background = "#0b0c10";
+                btn.style.color = "#66fcf1";
+                btn.style.border = "1px solid #45a29e";
+                btn.style.textAlign = "left";
+                btn.onclick = () => {
+                    if(idx === q.answer) {
+                        currentQuizIdx++;
+                        if(currentQuizIdx >= quizQuestions.length) {
+                            closeModal('modal-quiz');
+                            addItem({ id: 'depot_key', name: 'Depo Anahtarı', icon: '🔑' });
+                            showGameMessage("TEBRİKLER! 🎉", "Fen Bilimleri Sınavından 100 Aldın! Depo Anahtarı envanterine eklendi.");
+                        } else {
+                            renderQuizQuestion();
+                        }
+                    } else {
+                        closeModal('modal-quiz');
+                        showGameMessage("Başarısız!", "Yanlış cevap verdin. Sınavı tekrar denemelisin.");
+                    }
+                };
+                optDiv.appendChild(btn);
+            });
+        }
+
+        /* ÇAY OCAĞI SU TESİSATI YAPBOZU */
+        let puzzleTiles = [1, 2, 3, 4, 5, 6, 7, 8, 0];
+        function initPuzzle() {
+            puzzleTiles = [1, 2, 3, 4, 8, 5, 7, 6, 0]; // Çözülebilir Karışık Durum
+            renderPuzzle();
+            openModal('modal-puzzle');
+        }
+
+        function renderPuzzle() {
+            const pGrid = document.getElementById('puzzle-grid');
+            pGrid.innerHTML = "";
+            puzzleTiles.forEach((tile, idx) => {
+                const div = document.createElement('div');
+                div.className = "slide-tile" + (tile === 0 ? " empty" : "");
+                div.innerText = tile === 0 ? "" : tile;
+                div.onclick = () => moveTile(idx);
+                pGrid.appendChild(div);
+            });
+        }
+
+        function moveTile(idx) {
+            const emptyIdx = puzzleTiles.indexOf(0);
+            const validMoves = [idx - 1, idx + 1, idx - 3, idx + 3];
+            if(validMoves.includes(emptyIdx)) {
+                // Satır taşma kontrolü
+                if((idx % 3 === 0 && emptyIdx === idx - 1) || (idx % 3 === 2 && emptyIdx === idx + 1)) return;
+                
+                puzzleTiles[emptyIdx] = puzzleTiles[idx];
+                puzzleTiles[idx] = 0;
+                renderPuzzle();
+
+                // Çözüm Kontrolü (1,2,3,4,5,6,7,8,0)
+                if(puzzleTiles.join(',') === '1,2,3,4,5,6,7,8,0') {
+                    closeModal('modal-puzzle');
+                    player.money += 15;
+                    showGameMessage("Tesisat Tamir Edildi! 🔧", "Çay ocağının su tesisatını başarıyla tamir ettin! Okul yönetimi sana 15 TL ödül verdi.");
+                }
+            }
+        }
+
+        /* ÇOK AMAÇLI SALON GÖSTERİ ANIMASYONU */
+        let cinemaInterval = null;
+        function openCinemaModal() {
+            openModal('modal-cinema');
+            const cCanvas = document.getElementById('cinemaCanvas');
+            const cCtx = cCanvas.getContext('2d');
+            let frame = 0;
+
+            if(cinemaInterval) clearInterval(cinemaInterval);
+            cinemaInterval = setInterval(() => {
+                frame++;
+                cCtx.clearRect(0,0,cCanvas.width, cCanvas.height);
+                
+                // Sahne Perdeleri
+                cCtx.fillStyle = "#e74c3c";
+                cCtx.fillRect(0,0,60,cCanvas.height);
+                cCtx.fillRect(cCanvas.width - 60,0,60,cCanvas.height);
+
+                // Sahne Zemin
+                cCtx.fillStyle = "#d35400";
+                cCtx.fillRect(60, 180, cCanvas.width - 120, 80);
+
+                // Oyuncu Karakterler
+                const charX = 150 + Math.sin(frame * 0.1) * 50;
+                cCtx.fillStyle = "#f1c40f";
+                cCtx.fillRect(charX, 140, 20, 40);
+
+                cCtx.fillStyle = "#2ecc71";
+                cCtx.fillRect(350 - Math.sin(frame * 0.1) * 30, 140, 20, 40);
+
+                // Işık Projektörü
+                cCtx.fillStyle = "rgba(255, 255, 255, 0.15)";
+                cCtx.beginPath();
+                cCtx.moveTo(cCanvas.width / 2, 0);
+                cCtx.lineTo(charX - 20, 220);
+                cCtx.lineTo(charX + 40, 220);
+                cCtx.fill();
+
+                cCtx.fillStyle = "#fff";
+                cCtx.font = "14px Courier New";
+                cCtx.fillText("🎭 Tişatro Gösterisi Devam Ediyor...", 160, 30);
+            }, 50);
+        }
+
+        /* JUMPSCARE VE YAKALANMA EKRANI */
+        function triggerJumpscare(reason) {
+            isGameRunning = false;
+            cancelAnimationFrame(gameLoopId);
+            playSynthSound(150, 'sawtooth', 0.8);
+            
+            document.getElementById('jumpscare-subtext').innerText = reason;
+            document.getElementById('jumpscare-overlay').style.display = 'flex';
+        }
+
+        /* OYUNU SIFIRLA VE YENİDEN BAŞLAT */
+        function restartGame() {
+            document.getElementById('jumpscare-overlay').style.display = 'none';
+            player.x = 100;
+            player.y = 320;
+            player.hp = player.maxHp;
+            player.currentFloor = 1;
+            teacherSoundLevel = 0;
+            isGameRunning = true;
+            gameLoopId = requestAnimationFrame(updateGame);
+        }
+
+        /* ENVANTER ARAYÜZ YÖNETİMİ */
+        let selectedInvIndex = -1;
+        function renderInventoryModal() {
+            const container = document.getElementById('inv-grid-container');
+            container.innerHTML = "";
+            selectedInvIndex = -1;
+
+            if(player.inventory.length === 0) {
+                container.innerHTML = "<p style='grid-column:span 3; color:#aaa; font-size:0.8rem;'>Çantanda hiç eşya yok.</p>";
+                return;
+            }
+
+            player.inventory.forEach((item, idx) => {
+                const slot = document.createElement('div');
+                slot.className = "inv-slot";
+                slot.innerHTML = `<div class="item-icon">${item.icon}</div><span>${item.name}</span>`;
+                slot.onclick = () => {
+                    document.querySelectorAll('.inv-slot').forEach(s => s.classList.remove('selected'));
+                    slot.classList.add('selected');
+                    selectedInvIndex = idx;
+                };
+                container.appendChild(slot);
+            });
+        }
+
+        /* OYUN BAŞLATMA VE EVENT LISTENER BAĞLANTILARI */
+        window.addEventListener('DOMContentLoaded', () => {
+            
+            // Input Dinleyicileri
+            ['p-name', 'p-gender', 'p-hairstyle', 'c-skin', 'c-hair', 'c-shirt', 'c-pants'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updatePreview);
+            });
+            updatePreview();
+
+            // Klavye Dinleyicileri
+            window.addEventListener('keydown', (e) => {
+                keys[e.code] = true;
+                if(e.code === 'KeyE') handleInteraction();
+                if(e.code === 'KeyN') shootWaterGun();
+                if(e.code === 'KeyR') consumeItem();
+            });
+            window.addEventListener('keyup', (e) => {
+                keys[e.code] = false;
+            });
+
+            // Mobil Dokunmatik Kontroller
+            const bindTouch = (elemId, keyName) => {
+                const el = document.getElementById(elemId);
+                if(!el) return;
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); touchKeys[keyName] = true; });
+                el.addEventListener('touchend', (e) => { e.preventDefault(); touchKeys[keyName] = false; });
+            };
+
+            bindTouch('t-up', 'up');
+            bindTouch('t-down', 'down');
+            bindTouch('t-left', 'left');
+            bindTouch('t-right', 'right');
+            bindTouch('t-act-f', 'f');
+
+            document.getElementById('t-act-e').addEventListener('click', handleInteraction);
+            document.getElementById('t-act-n').addEventListener('click', shootWaterGun);
+            document.getElementById('t-act-r').addEventListener('click', consumeItem);
+            document.getElementById('t-act-inv').addEventListener('click', () => {
+                renderInventoryModal();
+                openModal('modal-inventory');
+            });
+
+            // Buton Dinleyicileri
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('menu').style.display = 'none';
+                document.getElementById('game-view').style.display = 'flex';
+                startBGM();
+                isGameRunning = true;
+                gameLoopId = requestAnimationFrame(updateGame);
+            });
+
+            document.getElementById('how-to-play-btn').addEventListener('click', () => openModal('modal-howToPlay'));
+            document.getElementById('m-close-howToPlay').addEventListener('click', () => closeModal('modal-howToPlay'));
+            document.getElementById('gm-close').addEventListener('click', () => closeModal('modal-game-msg'));
+            document.getElementById('btn-close-canteen').addEventListener('click', () => closeModal('modal-canteen'));
+            document.getElementById('btn-close-quiz').addEventListener('click', () => closeModal('modal-quiz'));
+            document.getElementById('btn-close-puzzle').addEventListener('click', () => closeModal('modal-puzzle'));
+            document.getElementById('btn-close-cinema').addEventListener('click', () => {
+                if(cinemaInterval) clearInterval(cinemaInterval);
+                closeModal('modal-cinema');
+            });
+            document.getElementById('btn-restart-game').addEventListener('click', restartGame);
+
+            document.getElementById('btn-inv').addEventListener('click', () => {
+                renderInventoryModal();
+                openModal('modal-inventory');
+            });
+            document.getElementById('btn-close-inv').addEventListener('click', () => closeModal('modal-inventory'));
+
+            document.getElementById('btn-equip-item').addEventListener('click', () => {
+                if(selectedInvIndex !== -1) {
+                    const item = player.inventory[selectedInvIndex];
+                    if(item.id === 'watergun') {
+                        player.hand = item;
+                        showGameMessage("Eşya Kuşanıldı", `${item.name} eline alındı.`);
+                    } else {
+                        showGameMessage("Kullanılamaz", "Bu eşya ele alınamaz. Sadece anahtar veya özel araçtır.");
+                    }
+                    closeModal('modal-inventory');
+                }
+            });
+
+            // Kantin Satın Alma Dinleyicisi
+            document.querySelectorAll('.btn-buy').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const itemType = e.target.getAttribute('data-item');
+                    if(itemType === 'toast') {
+                        if(player.money >= 12) {
+                            player.money -= 12;
+                            addItem({ id: 'toast', name: 'Kaşarlı Tost', icon: '🥪' });
+                            showGameMessage("Satın Alındı", "1 Adet Tost satın aldın. Tüketmek için [R] tuşuna basabilirsin.");
+                        } else {
+                            showGameMessage("Yetersiz Bakiye", "Tost almak için 12 TL'ye ihtiyacın var.");
+                        }
+                    } else if(itemType === 'watergun') {
+                        if(player.money >= 15) {
+                            if(hasItem('watergun')) {
+                                showGameMessage("Zaten Var", "Zaten bir Su Tabancasına sahipsin.");
+                            } else {
+                                player.money -= 15;
+                                const gun = { id: 'watergun', name: 'Su Tabancası', icon: '🔫' };
+                                addItem(gun);
+                                player.hand = gun;
+                                player.ammo = 10;
+                                showGameMessage("Satın Alındı", "Su Tabancası satın alındı ve eline kuşanıldı! Mermi: 10/10");
+                            }
+                        } else {
+                            showGameMessage("Yetersiz Bakiye", "Su tabancası almak için 15 TL'ye ihtiyacın var.");
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
